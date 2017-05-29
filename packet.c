@@ -1221,7 +1221,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	struct session_state *state = ssh->state;
 	u_char type, *cp, macbuf[SSH_DIGEST_MAX_LENGTH];
 	u_char tmp, padlen, pad = 0;
-	u_int authlen = 0, aadlen = 0;
+	u_int maclen = 0, authlen = 0, aadlen = 0;
 	u_int len = 0;
 
 	struct sshenc *enc   = NULL;
@@ -1245,6 +1245,8 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	}
 	block_size = enc ? enc->block_size : 8;
 	aadlen = (mac && mac->enabled && mac->etm) || authlen ? 4 : 0;
+	/* CAPTURE */
+	maclen = mac && mac->enabled ? mac->mac_len : 0;
 
 	type = (sshbuf_ptr(state->outgoing_packet))[5];
 	if (ssh_packet_log_type(type))
@@ -1405,7 +1407,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	}
 	else {
 		state->p_send.blocks += len / block_size;
-		state->p_send.bytes += len;		
+		state->p_send.bytes += len + authlen + maclen;		
 	}
 	sshbuf_reset(state->outgoing_packet);
 
@@ -1887,7 +1889,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		}
 
 		/*
-		 * Use state->packlen to store the amount of bytes
+		 * Use state->packlen to record the amount of bytes
 		 * we decrypt from input buffer 
 		 */
 		state->packlen = state->packlen + im_this_processed;
@@ -2002,9 +2004,6 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		sshbuf_dump(state->input, stderr);
 	#endif
 
-		/* Used for performance tests */
-		this_encrypted_received = aadlen + need + authlen + maclen;
-
 		/* EtM: check mac over encrypted input */
 		if (mac && mac->enabled && mac->etm) {
 			if ((r = mac_check(mac, state->p_read.seqnr,
@@ -2044,6 +2043,9 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			if ((r = sshbuf_consume(state->input, mac->mac_len)) != 0)
 				goto out;
 		}
+
+		/* CPATURE Used for performance tests (non-intermac) */
+		this_encrypted_received = aadlen + state->packlen + authlen + maclen;
 	}
 	if (seqnr_p != NULL)
 		*seqnr_p = state->p_read.seqnr;
@@ -2054,12 +2056,12 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			return SSH_ERR_NEED_REKEY;
 
 	if (im_is_intermac) { /* IM EXTENSION TODO: what are we actually computing here? */
-		state->p_send.blocks += im_size_decrypted_packet / (enc->block_size);
-		state->p_send.bytes += im_size_decrypted_packet;
+		state->p_read.blocks += im_size_decrypted_packet / (enc->block_size);
+		state->p_read.bytes += this_encrypted_received;
 	}
 	else {
 		state->p_read.blocks += (state->packlen + 4) / block_size;
-		state->p_read.bytes += state->packlen + 4;	
+		state->p_read.bytes += state->packlen + aadlen + authlen + maclen;	
 
 		/* get padlen */
 		padlen = sshbuf_ptr(state->incoming_packet)[4];
@@ -2108,17 +2110,10 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		return SSH_ERR_PROTOCOL_ERROR;
 	}
 
-	if (!state->server_side) {
-		/* 
-		 * NOTE subtracting 6 because of packet_length_field, 
-		 * padding_length_field and type field. 
-		 */
-		record_bytes_receive(state, *typep, sshbuf_len(state->incoming_packet), 1);
-	}
-
 	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
 	if (!state->server_side) {
 		record_bytes_receive(state, *typep, this_encrypted_received, 0);
+		record_bytes_receive(state, *typep, sshbuf_len(state->incoming_packet) ,1);
 	}
 
 	if (state->hook_in != NULL &&
