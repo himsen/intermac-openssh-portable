@@ -80,7 +80,8 @@ struct ssh {
 	/* APP data */
 	void *app_data;
 };
-void record_bytes(struct session_state*, u_char, size_t, int);
+int is_channel_data(u_char);
+void record_bytes_sent(struct session_state*, u_char, size_t, int);
 void record_bytes_receive(struct session_state*, u_char, size_t, int);
 typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,
     u_char *, void *);
@@ -134,6 +135,8 @@ void     ssh_packet_send_debug(struct ssh *, const char *fmt, ...) __attribute__
 
 int	 ssh_set_newkeys(struct ssh *, int mode);
 void	 ssh_packet_get_bytes(struct ssh *, u_int64_t *, u_int64_t *);
+void	 ssh_packet_get_bytes_performance(struct ssh *, u_int64_t *, u_int64_t *, u_int64_t *, u_int64_t *); /* CAPTURE */
+
 
 int	 ssh_packet_write_poll(struct ssh *);
 int	 ssh_packet_write_wait(struct ssh *);

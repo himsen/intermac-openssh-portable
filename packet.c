@@ -228,10 +228,12 @@ struct session_state {
 	TAILQ_HEAD(, packet) outgoing;
 
 	/* CAPTURE */
-	size_t sent_raw;
-	size_t sent_encrypted;
-	size_t receive_raw;
-	size_t receive_encrypted;
+	size_t sent_channel_data_raw;
+	size_t sent_channel_data_encrypted;
+	size_t sent_non_channel_data;
+	size_t receive_channel_data_raw;
+	size_t receive_channel_data_encrypted;
+	size_t receive_non_channel_data;
 	u_int channel_data_started;
 	u_int eof_seen;
 };
@@ -473,6 +475,16 @@ ssh_packet_get_bytes(struct ssh *ssh, u_int64_t *ibytes, u_int64_t *obytes)
 		*ibytes = ssh->state->p_read.bytes;
 	if (obytes)
 		*obytes = ssh->state->p_send.bytes;
+}
+
+void
+ssh_packet_get_bytes_performance(struct ssh *ssh, u_int64_t *sent_non_channel_data, u_int64_t *receive_non_channel_data, u_int64_t *sent_channel_data_raw, u_int64_t *receive_channel_data_raw)
+{
+
+	*sent_non_channel_data = ssh->state->sent_non_channel_data;
+	*receive_non_channel_data = ssh->state->receive_non_channel_data;
+	*sent_channel_data_raw = ssh->state->sent_channel_data_raw;
+	*receive_channel_data_raw = ssh->state->receive_channel_data_raw;
 }
 
 int
@@ -1161,6 +1173,13 @@ ssh_packet_log_type(u_char type)
 	}
 }
 
+int is_channel_data(u_char type) {
+	if (type == SSH2_MSG_CHANNEL_DATA)
+		return 1;
+	else
+		return 0;
+}
+
 /*
  * CAPTURE
  * Patch to record the amount of application data bytes sent 
@@ -1171,20 +1190,20 @@ void record_bytes_sent(struct session_state *state, u_char type, size_t bytes, i
 
 	if (type == SSH2_MSG_CHANNEL_REQUEST) {
 		state->channel_data_started = 0; /* Indicates start of capture */
-		state->sent_raw = 0;
-		state->sent_encrypted = 0;
+		state->sent_channel_data_raw = 0;
+		state->sent_channel_data_encrypted = 0;
 		state->eof_seen = 0; /* Indicates end of capture */
 	}
 	if (type == SSH2_MSG_CHANNEL_DATA) {
 		state->channel_data_started = 1;
 		if (raw) 
-			state->sent_raw += bytes; /* Raw data from application */
+			state->sent_channel_data_raw += bytes; /* Raw data from application */
 		else
-			state->sent_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
+			state->sent_channel_data_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
 	}
 	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
-		fprintf(stderr, "Bytes raw sent: %zu\n", state->sent_raw);
-		fprintf(stderr, "Bytes encrypted sent: %zu\n", state->sent_encrypted);
+		fprintf(stderr, "Bytes raw sent: %zu\n", state->sent_channel_data_raw);
+		fprintf(stderr, "Bytes encrypted sent: %zu\n", state->sent_channel_data_encrypted);
 		state->eof_seen = 1;
 	}
 }
@@ -1193,20 +1212,20 @@ void record_bytes_receive(struct session_state *state, u_char type, size_t bytes
 
 	if (type == SSH2_MSG_CHANNEL_SUCCESS && state->channel_data_started) {
 		state->channel_data_started = 0; /* Indicates start of capture */
-		state->receive_raw = 0;
-		state->receive_encrypted = 0;
+		state->receive_channel_data_raw = 0;
+		state->receive_channel_data_encrypted = 0;
 		state->eof_seen = 0; /* Indicates end of capture */
 	}
 	if (type == SSH2_MSG_CHANNEL_DATA) {
 		state->channel_data_started = 1;
 		if (raw) 
-			state->receive_raw += bytes; /* Raw data from application */
+			state->receive_channel_data_raw += bytes; /* Raw data from application */
 		else
-			state->receive_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
+			state->receive_channel_data_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
 	}
 	if (type == SSH2_MSG_CHANNEL_REQUEST && state->channel_data_started && !state->eof_seen) {
-		fprintf(stderr, "Bytes raw received: %zu\n", state->receive_raw);
-		fprintf(stderr, "Bytes encrypted received: %zu\n", state->receive_encrypted);
+		fprintf(stderr, "Bytes raw received: %zu\n", state->receive_channel_data_raw);
+		fprintf(stderr, "Bytes encrypted received: %zu\n", state->receive_channel_data_encrypted);
 		state->eof_seen = 1;
 	}
 
@@ -1260,6 +1279,9 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		 * NOTE subtracting 6 because of packet_length_field, 
 		 * padding_length_field and type field. 
 		 */
+		if (!is_channel_data(type))
+			state->sent_non_channel_data += sshbuf_len(state->outgoing_packet) - 6;
+
 		record_bytes_sent(state, type, sshbuf_len(state->outgoing_packet) - 6, 1);
 	}
 
@@ -2112,8 +2134,12 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 
 	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
 	if (!state->server_side) {
+
+		if (is_channel_data(*typep))
+			state->receive_non_channel_data += sshbuf_len(state->incoming_packet);
+
 		record_bytes_receive(state, *typep, this_encrypted_received, 0);
-		record_bytes_receive(state, *typep, sshbuf_len(state->incoming_packet) ,1);
+		record_bytes_receive(state, *typep, sshbuf_len(state->incoming_packet),1);
 	}
 
 	if (state->hook_in != NULL &&
