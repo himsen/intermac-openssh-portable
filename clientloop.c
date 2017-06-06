@@ -1505,7 +1505,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	double start_time, total_time;
 	int r, max_fd = 0, max_fd2 = 0, len;
 	//u_int64_t ibytes, obytes;
-	u_int64_t sent_non_channel_data, receive_non_channel_data, sent_channel_data_raw, receive_channel_data_raw;
+	u_int64_t sent_non_channel_data, receive_non_channel_data;
 	u_int nalloc = 0;
 	char buf[100];
 
@@ -1784,8 +1784,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 	/* Report bytes transferred, and transfer rates. */
 	total_time = get_current_time() - start_time;
-	packet_get_bytes_performance(&sent_non_channel_data, &receive_non_channel_data,
-		&sent_channel_data_raw, &receive_channel_data_raw);
+	packet_get_bytes_performance(&sent_non_channel_data, &receive_non_channel_data);
 	//verbose("Transferred: sent %llu, received %llu bytes, in %.1f seconds",
 	  //  (unsigned long long)obytes, (unsigned long long)ibytes, total_time);
 	/*
@@ -1795,8 +1794,8 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	*/
 	/* CAPTURE patched to not print received data */
 	if (total_time > 0) {
-		verbose("Bytes per second sent: %.1f", sent_channel_data_raw / total_time);
-		verbose("Bytes per second received: %.1f", receive_channel_data_raw / total_time);
+		verbose("Time sent: %.1f", total_time);
+		verbose("Time received: %.1f", total_time);
 		verbose("Bytes non channel sent: %u", sent_non_channel_data);
 		verbose("Bytes non channel received: %u", receive_non_channel_data);
 	}

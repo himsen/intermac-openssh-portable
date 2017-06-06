@@ -478,13 +478,11 @@ ssh_packet_get_bytes(struct ssh *ssh, u_int64_t *ibytes, u_int64_t *obytes)
 }
 
 void
-ssh_packet_get_bytes_performance(struct ssh *ssh, u_int64_t *sent_non_channel_data, u_int64_t *receive_non_channel_data, u_int64_t *sent_channel_data_raw, u_int64_t *receive_channel_data_raw)
+ssh_packet_get_bytes_performance(struct ssh *ssh, u_int64_t *sent_non_channel_data, u_int64_t *receive_non_channel_data)
 {
 
 	*sent_non_channel_data = ssh->state->sent_non_channel_data;
 	*receive_non_channel_data = ssh->state->receive_non_channel_data;
-	*sent_channel_data_raw = ssh->state->sent_channel_data_raw;
-	*receive_channel_data_raw = ssh->state->receive_channel_data_raw;
 }
 
 int

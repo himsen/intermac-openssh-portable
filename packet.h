@@ -135,7 +135,7 @@ void     ssh_packet_send_debug(struct ssh *, const char *fmt, ...) __attribute__
 
 int	 ssh_set_newkeys(struct ssh *, int mode);
 void	 ssh_packet_get_bytes(struct ssh *, u_int64_t *, u_int64_t *);
-void	 ssh_packet_get_bytes_performance(struct ssh *, u_int64_t *, u_int64_t *, u_int64_t *, u_int64_t *); /* CAPTURE */
+void	 ssh_packet_get_bytes_performance(struct ssh *, u_int64_t *, u_int64_t *); /* CAPTURE */
 
 
 int	 ssh_packet_write_poll(struct ssh *);
