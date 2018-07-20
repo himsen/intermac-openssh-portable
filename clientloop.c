@@ -113,6 +113,9 @@
 #include "ssherr.h"
 #include "hostfile.h"
 
+/* CAPTURE */
+#include <inttypes.h>
+
 /* import options */
 extern Options options;
 
@@ -1505,7 +1508,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	double start_time, total_time;
 	int r, max_fd = 0, max_fd2 = 0, len;
 	//u_int64_t ibytes, obytes;
-	u_int64_t sent_non_channel_data, receive_non_channel_data;
+	u_int64_t bytes_sent_channel_raw, bytes_sent_channel_ciphertext;
 	u_int nalloc = 0;
 	char buf[100];
 
@@ -1784,7 +1787,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 	/* Report bytes transferred, and transfer rates. */
 	total_time = get_current_time() - start_time;
-	packet_get_bytes_performance(&sent_non_channel_data, &receive_non_channel_data);
+	packet_get_bytes_performance(&bytes_sent_channel_ciphertext, &bytes_sent_channel_raw);
 	//verbose("Transferred: sent %llu, received %llu bytes, in %.1f seconds",
 	  //  (unsigned long long)obytes, (unsigned long long)ibytes, total_time);
 	/*
@@ -1792,12 +1795,19 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		verbose("Bytes per second: sent %.1f, received %.1f",
 		    obytes / total_time, ibytes / total_time);
 	*/
+
+	int run_nonce = 12345;
+
 	/* CAPTURE patched to not print received data */
-	if (total_time > 0) {
+	if (total_time > 0)
+		fprintf(stderr, "\"%d\": {\"walltime\":%.1f,\"bytes_sent_channel_ciphertext\":%" PRIu64 ",\"bytes_sent_channel_raw\":%" PRIu64 "}", run_nonce, total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
+		
+/*		
 		verbose("Time sent: %.1f", total_time);
 		verbose("Time received: %.1f", total_time);
-		verbose("Bytes non channel sent: %u", sent_non_channel_data);
-		verbose("Bytes non channel received: %u", receive_non_channel_data);
+		verbose("Bytes non channel sent: %" PRIu64, sent_non_channel_data);
+		verbose("Bytes non channel received: %" PRIu64, receive_non_channel_data);
+/*
 	}
 	/* Return the exit status of the program. */
 	debug("Exit status %d", exit_status);

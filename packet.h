@@ -80,9 +80,11 @@ struct ssh {
 	/* APP data */
 	void *app_data;
 };
+
+/* CAPTURE */
 int is_channel_data(u_char);
-void record_bytes_sent(struct session_state*, u_char, size_t, int);
-void record_bytes_receive(struct session_state*, u_char, size_t, int);
+void record_bytes(struct session_state*, u_char, size_t, int, int);
+
 typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,
     u_char *, void *);
 

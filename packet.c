@@ -86,7 +86,9 @@
 #include "ssherr.h"
 #include "sshbuf.h"
 
-#include "../intermaclib/im_core.h"
+#include "im_core.h"
+#include "im_common.h"
+
 
 #ifdef PACKET_DEBUG
 #define DBG(x) x
@@ -1162,7 +1164,7 @@ int
 ssh_packet_log_type(u_char type)
 {
 	switch (type) {
-	//case SSH2_MSG_CHANNEL_DATA:
+	case SSH2_MSG_CHANNEL_DATA:
 	case SSH2_MSG_CHANNEL_EXTENDED_DATA:
 	case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
 		return 0;
@@ -1183,8 +1185,12 @@ int is_channel_data(u_char type) {
  * Patch to record the amount of application data bytes sent 
  * both raw from application and the encrypted (SSH/intermac encoded) 
  * application data.
+ * raw = 0: do not capture raw
+ * raw = 1: do capture raw
+ * mode = 0: sent
+ * mode = 1: receive
  */
-void record_bytes_sent(struct session_state *state, u_char type, size_t bytes, int raw) {
+void record_bytes(struct session_state *state, u_char type, size_t bytes, int raw, int mode) {
 
 	if (type == SSH2_MSG_CHANNEL_REQUEST) {
 		state->channel_data_started = 0; /* Indicates start of capture */
@@ -1194,39 +1200,30 @@ void record_bytes_sent(struct session_state *state, u_char type, size_t bytes, i
 	}
 	if (type == SSH2_MSG_CHANNEL_DATA) {
 		state->channel_data_started = 1;
-		if (raw) 
-			state->sent_channel_data_raw += bytes; /* Raw data from application */
-		else
-			state->sent_channel_data_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
+		if (raw) {
+			if (mode == 0)
+				state->sent_channel_data_raw += bytes; /* Raw data from application */
+			else
+				state->receive_channel_data_raw += bytes; /* Raw data from application */
+		}
+		else {
+			if (mode == 0)
+				state->sent_channel_data_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
+			else
+				state->receive_channel_data_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */	
+		}
 	}
 	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
-		fprintf(stderr, "Bytes raw sent: %zu\n", state->sent_channel_data_raw);
-		fprintf(stderr, "Bytes encrypted sent: %zu\n", state->sent_channel_data_encrypted);
+		if (mode == 0) {
+			fprintf(stderr, "Bytes raw sent: %zu\n", state->sent_channel_data_raw);
+			fprintf(stderr, "Bytes encrypted sent: %zu\n", state->sent_channel_data_encrypted);			
+		}
+		else {
+			fprintf(stderr, "Bytes raw received: %zu\n", state->receive_channel_data_raw);
+			fprintf(stderr, "Bytes encrypted received: %zu\n", state->receive_channel_data_encrypted);
+		}
 		state->eof_seen = 1;
 	}
-}
-
-void record_bytes_receive(struct session_state *state, u_char type, size_t bytes, int raw) {
-
-	if (type == SSH2_MSG_CHANNEL_SUCCESS && state->channel_data_started) {
-		state->channel_data_started = 0; /* Indicates start of capture */
-		state->receive_channel_data_raw = 0;
-		state->receive_channel_data_encrypted = 0;
-		state->eof_seen = 0; /* Indicates end of capture */
-	}
-	if (type == SSH2_MSG_CHANNEL_DATA) {
-		state->channel_data_started = 1;
-		if (raw) 
-			state->receive_channel_data_raw += bytes; /* Raw data from application */
-		else
-			state->receive_channel_data_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
-	}
-	if (type == SSH2_MSG_CHANNEL_REQUEST && state->channel_data_started && !state->eof_seen) {
-		fprintf(stderr, "Bytes raw received: %zu\n", state->receive_channel_data_raw);
-		fprintf(stderr, "Bytes encrypted received: %zu\n", state->receive_channel_data_encrypted);
-		state->eof_seen = 1;
-	}
-
 }
 
 /*
@@ -1280,7 +1277,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		if (!is_channel_data(type))
 			state->sent_non_channel_data += sshbuf_len(state->outgoing_packet) - 6;
 
-		record_bytes_sent(state, type, sshbuf_len(state->outgoing_packet) - 6, 1);
+		record_bytes(state, type, sshbuf_len(state->outgoing_packet) - 6, 1, 0);
 	}
 
 #ifdef PACKET_DEBUG
@@ -1317,8 +1314,11 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 
 		/* InterMac Encrypt */
 		if (im_encrypt(im_ctx, &im_ct, &im_length, sshbuf_ptr(state->outgoing_packet), 
-			sshbuf_len(state->outgoing_packet)) != 0 ) 
+			sshbuf_len(state->outgoing_packet)) != IM_OK ) {
+
+			r = SSH_ERR_INTERNAL_ERROR;
 			goto out;
+		}
 
 		/* Append to OpenSSH output buffer */
 		if ((r = sshbuf_put(state->output, im_ct, im_length)) != 0)
@@ -1433,7 +1433,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 
 	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
 	if (!state->server_side) {
-		record_bytes_sent(state, type, sshbuf_len(state->output), 0);
+		record_bytes(state, type, sshbuf_len(state->output), 0, 0);
 	}
 
 	if (type == SSH2_MSG_NEWKEYS)
@@ -1903,7 +1903,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		im_ctx = cipher_get_intermac_context(state->receive_context);
 
 		if (im_decrypt(im_ctx, sshbuf_ptr(state->input), 
-			sshbuf_len(state->input), 0, &im_this_processed, &im_decrypted_packet, 
+			sshbuf_len(state->input), &im_this_processed, &im_decrypted_packet, 
 				&im_size_decrypted_packet, &im_total_allocated) != 0) {
 			return SSH_ERR_INTERNAL_ERROR;
 		}
@@ -2136,8 +2136,8 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		if (is_channel_data(*typep))
 			state->receive_non_channel_data += sshbuf_len(state->incoming_packet);
 
-		record_bytes_receive(state, *typep, this_encrypted_received, 0);
-		record_bytes_receive(state, *typep, sshbuf_len(state->incoming_packet),1);
+		record_bytes(state, *typep, this_encrypted_received, 0, 1);
+		record_bytes(state, *typep, sshbuf_len(state->incoming_packet), 1, 1);
 	}
 
 	if (state->hook_in != NULL &&
