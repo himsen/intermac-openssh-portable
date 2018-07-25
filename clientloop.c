@@ -1494,6 +1494,37 @@ client_channel_closed(int id, void *arg)
 	leave_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
 }
 
+static void write_to_log(char *alg_name, char *measurement) {
+
+	int alg_name_len = 0;
+	int suffix_len = 6;
+	char suffix[6] = ".json";
+	char prefix_len = 11;
+	char prefix[11] = "imopenssh_";
+	char *fname = NULL;
+	FILE *fd = NULL;
+ 
+	alg_name_len = strlen(alg_name);
+	fname = (char *) calloc(sizeof(char), 
+		prefix_len + alg_name_len + suffix_len);
+ 
+	if (fname != NULL) {
+ 
+		memcpy(fname, alg_name, alg_name_len);
+		memcpy(fname + alg_name_len, suffix, suffix_len);
+ 
+		fd = fopen(fname, "a");
+ 
+		if (fd != NULL) {
+ 
+			fprintf(fd, "%s", measurement);
+			fclose(fd);
+		}
+ 
+		free(fname);
+	}
+}
+
 /*
  * Implements the interactive session with the server.  This is called after
  * the user has been authenticated, and a command has been started on the
@@ -1508,7 +1539,6 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	double start_time, total_time;
 	int r, max_fd = 0, max_fd2 = 0, len;
 	//u_int64_t ibytes, obytes;
-	u_int64_t bytes_sent_channel_raw, bytes_sent_channel_ciphertext;
 	u_int nalloc = 0;
 	char buf[100];
 
@@ -1785,6 +1815,8 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	buffer_free(&stdout_buffer);
 	buffer_free(&stderr_buffer);
 
+	u_int64_t bytes_sent_channel_raw, bytes_sent_channel_ciphertext;
+
 	/* Report bytes transferred, and transfer rates. */
 	total_time = get_current_time() - start_time;
 	packet_get_bytes_performance(&bytes_sent_channel_ciphertext, &bytes_sent_channel_raw);
@@ -1795,20 +1827,52 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		verbose("Bytes per second: sent %.1f, received %.1f",
 		    obytes / total_time, ibytes / total_time);
 	*/
+	
+	time_t t;
+	srand((unsigned) time(&t));
 
-	int run_nonce = 12345;
+	int alg_name_len = 0;
+	/* +1 to copy \0 terminter */
+	int suffix_len = 6;
+	char suffix[6] = ".json";
+	char prefix_len = 10;
+	char prefix[11] = "imopenssh_";
+	char *fname = NULL;
+	FILE *fd = NULL;
+ 	int run_nonce = rand();
+	FILE *fd;
+	char *alg_name = get_cipher(active_state);
 
-	/* CAPTURE patched to not print received data */
-	if (total_time > 0)
-		fprintf(stderr, "\"%d\": {\"walltime\":%.1f,\"bytes_sent_channel_ciphertext\":%" PRIu64 ",\"bytes_sent_channel_raw\":%" PRIu64 "}", run_nonce, total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
+	alg_name_len = strlen(alg_name);
+	fname = (char *) calloc(sizeof(char), 
+		prefix_len + alg_name_len + suffix_len);
+ 
+	if (fname != NULL) {
+ 
+ 		memcpy(fname, prefix, prefix_len);
+		memcpy(fname + prefix_len, alg_name, alg_name_len);
+		memcpy(fname + prefix_len + alg_name_len, suffix, suffix_len);
+	
+		fd = fopen(fanme, "a");
+
+		if (fd == NULL) {
 		
+			/* CAPTURE patched to not print received data */
+			fprintf(fd, "\"%d\": {\"walltime\":%.1f,\"bytes_sent_channel_ciphertext\":%" PRIu64 ",\"bytes_sent_channel_raw\":%" PRIu64 "}", run_nonce, total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
+			fclose(fd);
+
+		}
+
+		free(fname);
+	}
+
 /*		
 		verbose("Time sent: %.1f", total_time);
 		verbose("Time received: %.1f", total_time);
 		verbose("Bytes non channel sent: %" PRIu64, sent_non_channel_data);
 		verbose("Bytes non channel received: %" PRIu64, receive_non_channel_data);
-/*
 	}
+*/
 	/* Return the exit status of the program. */
 	debug("Exit status %d", exit_status);
 	return exit_status;

@@ -164,6 +164,11 @@ static const struct sshcipher ciphers[] = {
 
 /*--*/
 
+/* CAPTURE */
+char *_get_cipher(struct sshcipher_ctx *cc) {
+	return cc->cipher->name;
+}
+
 /* IM EXTENSION */
 int cipher_is_intermac(struct sshcipher_ctx *cc) {
 
