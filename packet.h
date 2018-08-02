@@ -82,6 +82,7 @@ struct ssh {
 };
 
 /* CAPTURE */
+char * get_cipher(struct ssh *ssh);
 int is_channel_data(u_char);
 void record_bytes(struct session_state*, u_char, size_t, int, int);
 

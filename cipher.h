@@ -67,6 +67,8 @@
 struct sshcipher;
 struct sshcipher_ctx;
 
+/* CAPTURE */
+char * _get_cipher(struct sshcipher_ctx *cc);
 int cipher_is_intermac(struct sshcipher_ctx *); /* IM EXTENSION */ 
 struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *);  /* IM EXTENSION */
 int cipher_im_block_size(struct sshcipher_ctx *); /* IM EXTENSION */

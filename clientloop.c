@@ -1494,6 +1494,7 @@ client_channel_closed(int id, void *arg)
 	leave_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
 }
 
+/*
 static void write_to_log(char *alg_name, char *measurement) {
 
 	int alg_name_len = 0;
@@ -1524,6 +1525,7 @@ static void write_to_log(char *alg_name, char *measurement) {
 		free(fname);
 	}
 }
+*/
 
 /*
  * Implements the interactive session with the server.  This is called after
@@ -1828,11 +1830,12 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		    obytes / total_time, ibytes / total_time);
 	*/
 	
+	/*
 	time_t t;
 	srand((unsigned) time(&t));
 
 	int alg_name_len = 0;
-	/* +1 to copy \0 terminter */
+	/* +1 to copy 0 terminater */
 	int suffix_len = 6;
 	char suffix[6] = ".json";
 	char prefix_len = 10;
@@ -1840,27 +1843,31 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	char *fname = NULL;
 	FILE *fd = NULL;
  	int run_nonce = rand();
-	FILE *fd;
 	char *alg_name = get_cipher(active_state);
+	int alg_name_len = 0;
 
 	alg_name_len = strlen(alg_name);
 	fname = (char *) calloc(sizeof(char), 
 		prefix_len + alg_name_len + suffix_len);
  
+	fprintf(stderr, "nonce: %d\n", run_nonce);
+	fprintf(stderr, "walltime: %.1f\n", total_time);
+	fprintf(stderr, "sent ciphertext: %" PRIu64 "\n", bytes_sent_channel_ciphertext);
+	fprintf(stderr, "sent raw: %" PRIu64 "\n", bytes_sent_channel_raw);
+
 	if (fname != NULL) {
  
  		memcpy(fname, prefix, prefix_len);
 		memcpy(fname + prefix_len, alg_name, alg_name_len);
 		memcpy(fname + prefix_len + alg_name_len, suffix, suffix_len);
 	
-		fd = fopen(fanme, "a");
+		fd = fopen(fname, "a");
 
-		if (fd == NULL) {
-		
+		if (fd != NULL) {
+
 			/* CAPTURE patched to not print received data */
-			fprintf(fd, "\"%d\": {\"walltime\":%.1f,\"bytes_sent_channel_ciphertext\":%" PRIu64 ",\"bytes_sent_channel_raw\":%" PRIu64 "}", run_nonce, total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
+			fprintf(fd, "\"%d\": {\"walltime\":%.1f,\"bytes_sent_channel_ciphertext\":%" PRIu64 ",\"bytes_sent_channel_raw\":%" PRIu64 "},\n", run_nonce, total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
 			fclose(fd);
-
 		}
 
 		free(fname);

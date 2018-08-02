@@ -244,7 +244,7 @@ struct session_state {
 
 /* CAPTURE */
 char * get_cipher(struct ssh *ssh) {
-	return _get_cipher(ssh->send_context);
+	return _get_cipher(ssh->state->send_context);
 }
 
 struct ssh *
