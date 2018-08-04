@@ -6,10 +6,10 @@ import time
 import math
 import datetime
 
-NUMBER_OF_SAMPLES = 1
+NUMBER_OF_SAMPLES = 5
 FNAME_LOG_PREFIX = 'imopenssh'
 FNAME_LOG_EXTENSION = 'json'
-FNAME_SCP_SIZE = 1024 * 1024 * 1 # 500mb
+FNAME_SCP_SIZE = 1024 * 1024 # 500mb 1024 * 1024 * 500
 FNAME_SCP = 'scp_copy'
 SSH_DIR = os.getcwd()
 USER = 'himsen'
@@ -31,7 +31,7 @@ std_ciphers = ['aes128-ctr',
 	'hmac-md5',
 	'aes256-ctr',
 	'hmac-sha2-512',
-	'es128-cbc',
+	'aes128-cbc',
 	'hmac-sha1',
 	'aes128-ctr',
 	'hmac-ripemd160'
@@ -56,18 +56,31 @@ intermac_ciphers = ['im-aes128-gcm-128',
 	]
 
 # Execute SCP
-def run_scp(cipher, fd):
+def run_scp(cipher, mac, fd):
 
 	# Construct terminal cmd
-	cmd = '{}/scp -o "{}" -c {} -i {} -P {} {} {}@{}:'.format(
-		SSH_DIR,
-		COMPRESSION_NO,
-		cipher,
-		ID_FILE,
-		PORT,
-		FNAME_SCP,
-		USER,
-		DEST)
+	if mac == None:
+		cmd = '{}/scp -o "{}" -c {} -i {} -P {} {} {}@{}:'.format(
+			SSH_DIR,
+			COMPRESSION_NO,
+			cipher,
+			ID_FILE,
+			PORT,
+			FNAME_SCP,
+			USER,
+			DEST)
+	else:
+		cmd = '{}/scp -o "{}" -o "MACs {}" -c {} -i {} -P {} {} {}@{}:'.format(
+			SSH_DIR,
+			COMPRESSION_NO,
+			mac,
+			cipher,
+			ID_FILE,
+			PORT,
+			FNAME_SCP,
+			USER,
+			DEST)
+
 
 	# Execute
 	ssh = subprocess.Popen(cmd, shell=True, stdout=fd)
@@ -80,45 +93,41 @@ def run_scp(cipher, fd):
 	time.sleep(0.050)
 
 
-def init_log_files():
+def init_log_file(cipher, mac):
 
-	for alg_name_list in std_ciphers, auth_ciphers, intermac_ciphers:
-		for alg_name in alg_name_list:
-			fname = './{}_{}.{}'.format(FNAME_LOG_PREFIX, alg_name,
-				FNAME_LOG_EXTENSION)
-			with open(fname, "w+") as fd:
-				fd.write('{\n')
-				fd.write('"cipher":{},\n'.format(alg_name))
-				fd.write('"number_of_samples":{},\n'.format(NUMBER_OF_SAMPLES))
+	with open(FNAME_LOG_PREFIX, "w+") as fd:
+		if mac == None:
+			fd.write('{}\n'.format(cipher))
+		else:
+			fd.write('{}+{}\n'.format(cipher, mac))
+		fd.write('{}\n'.format(NUMBER_OF_SAMPLES))
+		fd.write('{}\n'.format(str(datetime.datetime.now().strftime("%x"))))
 
-def rename_log_files():
 
-	t = int(time.time())
+def rename_log_file(cipher, mac):
 
-	for alg_name_list in std_ciphers, auth_cipher, intermac_ciphers:
-		for alg_name in alg_name_list:
-			fname = '{}_{}.{}'.format(FNAME_LOG_PREFIX, alg_name,
-				FNAME_LOG_EXTENSION)
-			with open(fname, "w+") as fd:
-				fd.write('"date":{}'.format(str(datetime.datetime.new())))
-				fd.write('}')
-			new_fname = '{}_{}_{}.{}'.format(t, FNAME_LOG_PREFIX, alg_name,
-				FNAME_LOG_EXTENSION)
-			print "Renaming file {} to {}".format(fname, new_fname)
-			os.rename(fname, new_fname)
+	if mac == None:
+		new_fname = '{}_{}.{}'.format(FNAME_LOG_PREFIX, cipher,
+			FNAME_LOG_EXTENSION)
+	else:
+	 	new_fname = '{}_{}_{}.{}'.format(FNAME_LOG_PREFIX, cipher, mac,
+			FNAME_LOG_EXTENSION)	
+	print "Renaming file {} to {}".format(FNAME_LOG_PREFIX, new_fname)
+	os.rename(FNAME_LOG_PREFIX, new_fname)
+
 
 def delete_remote_test_file():
 
 	# Construct terminal cmd
-	cmd = '{}/ssh -i {} -p {} {} "rm {}"'.format(
-		SSH_DIR,
+	cmd = 'ssh -i {} -p {} {}@{} "rm {}"'.format(
 		ID_FILE,
 		PORT,
+		USER,
 		DEST,
 		FNAME_SCP)
 
 	# Exeute
-	ssh = subprocess.Popen(cmd, shell=True, stdout=fd)
+	ssh = subprocess.Popen(cmd, shell=True)
 
 def run():
  
@@ -132,29 +141,46 @@ def run():
  	# Used to silence SSH ouput
  	with open(os.devnull, "w") as fd:
 
- 		init_log_files()
-
 	 	print '**********Executing benchmarks'
 
-		for cipher_list in std_ciphers, auth_ciphers, intermac_ciphers:
+		for cipher, mac in zip(std_ciphers[0::2],std_ciphers[1::2]):
+
+			print '*****{}+{}'.format(cipher, mac)
+
+			init_log_file(cipher, mac)
+
+			i = 1
+			for x in range(0, NUMBER_OF_SAMPLES):
+
+				run_scp(cipher, mac, fd)
+
+				if ((x + 1) % sample_progress == 0):
+					print '{} samples collected'.format(sample_progress * i)
+				i = i + 1
+
+			rename_log_file(cipher, mac)
+
+		for cipher_list in auth_ciphers, intermac_ciphers:
 			for cipher in cipher_list:
 
 				print '*****{}'.format(cipher)
 
+				init_log_file(cipher, None)
+
 				i = 1
 				for x in range(0, NUMBER_OF_SAMPLES):
 
-					run_scp(cipher, fd)
+					run_scp(cipher, None, fd)
 
 					if ((x + 1) % sample_progress == 0):
 						print '{} samples collected'.format(sample_progress * i)
 					i = i + 1
 
+				rename_log_file(cipher, None)
+
 		print '**********Finished benchmarks'
 
 		fd.close()
-
-		rename_log_files()
 
 	# Clean up
 	os.remove(FNAME_SCP)
@@ -164,7 +190,10 @@ if __name__ == '__main__':
 
 	print 'Number of samples for each cipher: {}'.format(NUMBER_OF_SAMPLES)
 	print 'Ciphers selected:'
-	for cipher_list in std_ciphers, auth_ciphers, intermac_ciphers:
+	for cipher, mac in zip(std_ciphers[0::2],std_ciphers[1::2]):
+		print '{}+{}'.format(cipher, mac)
+
+	for cipher_list in auth_ciphers, intermac_ciphers:
 		for cipher in cipher_list:
 			print cipher
 

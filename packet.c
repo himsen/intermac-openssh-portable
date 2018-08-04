@@ -1207,32 +1207,30 @@ void record_bytes(struct session_state *state, u_char type, size_t bytes, int ra
 	}
 	if (type == SSH2_MSG_CHANNEL_DATA) {
 		state->channel_data_started = 1;
-		if (raw) {
+		if (raw == 1) {
 			if (mode == 0)
 				state->bytes_sent_channel_raw += bytes; /* Raw data from application */
 			else
-				state->bytes_receive_channel_raw
-		+= bytes; /* Raw data from application */
+				state->bytes_receive_channel_raw += bytes; /* Raw data from application */
 		}
 		else {
 			if (mode == 0)
-				state->bytes_sent_channel_ciphertext
-		+= bytes; /* Encrypted (ssh/intermac encoded) data from application */
+				state->bytes_sent_channel_ciphertext += bytes; /* Encrypted (ssh/intermac encoded) data from application */
 			else
 				state->bytes_receive_channel_ciphertext += bytes; /* Encrypted (ssh/intermac encoded) data from application */	
 		}
 	}
 	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
 		if (mode == 0) {
-			state->r_bytes_receive_channel_raw = state->bytes_sent_channel_raw;
-			state->r_bytes_receive_channel_ciphertext = state->bytes_sent_channel_ciphertext;
+			state->r_bytes_sent_channel_raw = state->bytes_sent_channel_raw;
+			state->r_bytes_sent_channel_ciphertext = state->bytes_sent_channel_ciphertext;
 			/*
 			fprintf(stderr, "Bytes raw sent: %zu\n", state->bytes_sent_channel_raw);
 			fprintf(stderr, "Bytes encrypted sent: %zu\n", state->bytes_sent_channel_ciphertext);			
 			*/
 		}
 		else {
-			state->r_bytes_sent_channel_raw = state->bytes_receive_channel_raw;
+			state->r_bytes_receive_channel_raw = state->bytes_receive_channel_raw;
 			state->r_bytes_receive_channel_ciphertext = state->bytes_receive_channel_ciphertext;
 			/*
 			fprintf(stderr, "Bytes raw received: %zu\n", state->bytes_receive_channel_raw);

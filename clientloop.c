@@ -1821,7 +1821,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 	/* Report bytes transferred, and transfer rates. */
 	total_time = get_current_time() - start_time;
-	packet_get_bytes_performance(&bytes_sent_channel_ciphertext, &bytes_sent_channel_raw);
+	packet_get_bytes_performance(&bytes_sent_channel_raw, &bytes_sent_channel_ciphertext);
 	//verbose("Transferred: sent %llu, received %llu bytes, in %.1f seconds",
 	  //  (unsigned long long)obytes, (unsigned long long)ibytes, total_time);
 	/*
@@ -1829,44 +1829,25 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		verbose("Bytes per second: sent %.1f, received %.1f",
 		    obytes / total_time, ibytes / total_time);
 	*/
-	
-	/*
-	time_t t;
-	srand((unsigned) time(&t));
 
-	int alg_name_len = 0;
-	/* +1 to copy 0 terminater */
-	int suffix_len = 6;
-	char suffix[6] = ".json";
+	/* +1 to copy \0 terminater */
 	char prefix_len = 10;
-	char prefix[11] = "imopenssh_";
+	char prefix[10] = "imopenssh";
 	char *fname = NULL;
 	FILE *fd = NULL;
- 	int run_nonce = rand();
-	char *alg_name = get_cipher(active_state);
-	int alg_name_len = 0;
 
-	alg_name_len = strlen(alg_name);
-	fname = (char *) calloc(sizeof(char), 
-		prefix_len + alg_name_len + suffix_len);
- 
-	fprintf(stderr, "nonce: %d\n", run_nonce);
-	fprintf(stderr, "walltime: %.1f\n", total_time);
-	fprintf(stderr, "sent ciphertext: %" PRIu64 "\n", bytes_sent_channel_ciphertext);
-	fprintf(stderr, "sent raw: %" PRIu64 "\n", bytes_sent_channel_raw);
+	fname = (char *) calloc(sizeof(char), prefix_len);
 
 	if (fname != NULL) {
  
  		memcpy(fname, prefix, prefix_len);
-		memcpy(fname + prefix_len, alg_name, alg_name_len);
-		memcpy(fname + prefix_len + alg_name_len, suffix, suffix_len);
 	
 		fd = fopen(fname, "a");
 
 		if (fd != NULL) {
 
 			/* CAPTURE patched to not print received data */
-			fprintf(fd, "\"%d\": {\"walltime\":%.1f,\"bytes_sent_channel_ciphertext\":%" PRIu64 ",\"bytes_sent_channel_raw\":%" PRIu64 "},\n", run_nonce, total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
+			fprintf(fd, "%.1f\n%" PRIu64 "\n%" PRIu64 "\n", total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
 			fclose(fd);
 		}
 
