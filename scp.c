@@ -147,7 +147,7 @@ int showprogress = 1;
 int throughlocal = 0;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
-char *ssh_program = "/home/himsen/Projects/openssh-portable-intermac/ssh";
+char *ssh_program = "/home/ec2-user/intermac-openssh-portable/ssh";
 
 /* This is used to store the pid of ssh_program */
 pid_t do_cmd_pid = -1;

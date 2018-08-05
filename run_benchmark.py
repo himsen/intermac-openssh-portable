@@ -9,13 +9,13 @@ import datetime
 NUMBER_OF_SAMPLES = 5
 FNAME_LOG_PREFIX = 'imopenssh'
 FNAME_LOG_EXTENSION = 'json'
-FNAME_SCP_SIZE = 1024 * 1024 # 500mb 1024 * 1024 * 500
+FNAME_SCP_SIZE = 1024 * 1024 * 500  # 500mb 1024 * 1024 * 500
 FNAME_SCP = 'scp_copy'
 SSH_DIR = os.getcwd()
-USER = 'himsen'
-DEST = 'localhost'
+USER = 'ec2-user'
+DEST = '35.176.180.93'
 PORT = '22221'
-ID_FILE = './id_rsa_im'
+ID_FILE = '../rhul_im_ec2.pem'
 COMPRESSION_NO = 'Compression no'
 
 # Ciphers to test
@@ -51,7 +51,7 @@ intermac_ciphers = [
 	'im-aes128-gcm-2048',
 	'im-chacha-poly-2048',
 	'im-aes128-gcm-4096',
-	'im-chacha-poly-4096'
+	'im-chacha-poly-4096',
 	'im-aes128-gcm-8192',
 	'im-chacha-poly-8192'
 	]
@@ -159,6 +159,8 @@ def run():
 					print '{} samples collected'.format(sample_progress * i)
 				i = i + 1
 
+				delete_remote_test_file()
+
 			rename_log_file(cipher, mac)
 
 		for cipher_list in auth_ciphers, intermac_ciphers:
@@ -177,6 +179,8 @@ def run():
 						print '{} samples collected'.format(sample_progress * i)
 					i = i + 1
 
+					delete_remote_test_file()
+
 				rename_log_file(cipher, None)
 
 		print '**********Finished benchmarks'
@@ -185,7 +189,6 @@ def run():
 
 	# Clean up
 	os.remove(FNAME_SCP)
-	delete_remote_test_file()
 
 if __name__ == '__main__':
 
