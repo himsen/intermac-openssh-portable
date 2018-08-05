@@ -149,6 +149,10 @@ static const struct sshcipher ciphers[] = {
 			SSH_CIPHER_SSH2, 4096, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-4096",
 			SSH_CIPHER_SSH2, 4096, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-8192",
+			SSH_CIPHER_SSH2, 8192, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-8192",
+			SSH_CIPHER_SSH2, 8192, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 # endif /* OPENSSL_HAVE_EVPGCM */
 #else /* WITH_OPENSSL */
 	{ "aes128-ctr",	SSH_CIPHER_SSH2, 16, 16, 0, 0, 0, CFLAG_AESCTR, NULL },

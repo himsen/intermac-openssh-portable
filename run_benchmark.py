@@ -41,8 +41,7 @@ auth_ciphers = ['chacha20-poly1305@openssh.com',
 	'aes128-gcm@openssh.com'
 	]
 
-intermac_ciphers = ['im-aes128-gcm-128',
-	'im-chacha-poly-128',
+intermac_ciphers = [
 	'im-aes128-gcm-256',
 	'im-chacha-poly-256',
 	'im-aes128-gcm-512',
@@ -53,6 +52,8 @@ intermac_ciphers = ['im-aes128-gcm-128',
 	'im-chacha-poly-2048',
 	'im-aes128-gcm-4096',
 	'im-chacha-poly-4096'
+	'im-aes128-gcm-8192',
+	'im-chacha-poly-8192'
 	]
 
 # Execute SCP
