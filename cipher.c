@@ -125,30 +125,58 @@ static const struct sshcipher ciphers[] = {
 			SSH_CIPHER_SSH2, 16, 16, 12, 16, 0, 0, EVP_aes_128_gcm },
 	{ "aes256-gcm@openssh.com",
 			SSH_CIPHER_SSH2, 16, 32, 12, 16, 0, 0, EVP_aes_256_gcm },
+	{"im-aes128-gcm-127",
+			SSH_CIPHER_SSH2, 127, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
+	{"im-chacha-poly-127",
+			SSH_CIPHER_SSH2, 127, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
 	{"im-aes128-gcm-128",
-			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
+			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-128",
 			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-255",
+			SSH_CIPHER_SSH2, 255, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-255",
+			SSH_CIPHER_SSH2, 255, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-256",
-			SSH_CIPHER_SSH2, 256, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
+			SSH_CIPHER_SSH2, 256, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-256",
 			SSH_CIPHER_SSH2, 256, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-511",
+			SSH_CIPHER_SSH2, 511, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-511",
+			SSH_CIPHER_SSH2, 511, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-512",
 			SSH_CIPHER_SSH2, 512, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-512",
 			SSH_CIPHER_SSH2, 512, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-1023",
+			SSH_CIPHER_SSH2, 1023, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-1023",
+			SSH_CIPHER_SSH2, 1023, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-1024",
 			SSH_CIPHER_SSH2, 1024, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-1024",
 			SSH_CIPHER_SSH2, 1024, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-2047",
+			SSH_CIPHER_SSH2, 2047, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-2047",
+			SSH_CIPHER_SSH2, 2047, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-2048",
 			SSH_CIPHER_SSH2, 2048, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-2048",
 			SSH_CIPHER_SSH2, 2048, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-4095",
+			SSH_CIPHER_SSH2, 4095, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-4095",
+			SSH_CIPHER_SSH2, 4095, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-4096",
 			SSH_CIPHER_SSH2, 4096, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-4096",
 			SSH_CIPHER_SSH2, 4096, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-8191",
+			SSH_CIPHER_SSH2, 8191, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-8191",
+			SSH_CIPHER_SSH2, 8191, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-chacha-poly-8192",
 			SSH_CIPHER_SSH2, 8192, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 	{"im-aes128-gcm-8192",

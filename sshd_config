@@ -25,7 +25,7 @@ ListenAddress 127.0.0.1
 # Ciphers and keying
 #RekeyLimit default none
 
-Ciphers aes128-ctr,aes128-cbc,im-chacha-poly-128,im-aes128-gcm-128,im-chacha-poly-256,im-aes128-gcm-256,im-chacha-poly-512,im-aes128-gcm-512,im-chacha-poly-1024,im-aes128-gcm-1024,im-chacha-poly-2048,im-aes128-gcm-2048,im-chacha-poly-4096,im-aes128-gcm-4096,im-chacha-poly-8192,im-aes128-gcm-8192,aes128-gcm@openssh.com,chacha20-poly1305@openssh.com,3des-cbc,aes256-ctr
+Ciphers aes128-ctr,aes128-cbc,im-chacha-poly-127,im-aes128-gcm-127,im-chacha-poly-128,im-aes128-gcm-128,im-chacha-poly-255,im-aes128-gcm-255,im-chacha-poly-256,im-aes128-gcm-256,im-chacha-poly-511,im-aes128-gcm-511,im-chacha-poly-512,im-aes128-gcm-512,im-chacha-poly-1023,im-aes128-gcm-1023,im-chacha-poly-1024,im-aes128-gcm-1024,im-chacha-poly-2047,im-aes128-gcm-2047,im-chacha-poly-2048,im-aes128-gcm-2048,im-chacha-poly-4095,im-aes128-gcm-4095,im-chacha-poly-4096,im-aes128-gcm-4096,im-chacha-poly-8191,im-aes128-gcm-8191,im-chacha-poly-8192,im-aes128-gcm-8192,aes128-gcm@openssh.com,chacha20-poly1305@openssh.com,3des-cbc,aes256-ctr
 
 MACs hmac-md5,hmac-md5-etm@openssh.com,umac-64-etm@openssh.com,hmac-sha1,hmac-sha2-512,hmac-ripemd160
 

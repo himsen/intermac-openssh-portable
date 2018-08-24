@@ -6,7 +6,7 @@ import time
 import math
 import datetime
 
-NUMBER_OF_SAMPLES = 5
+NUMBER_OF_SAMPLES = 3
 FNAME_LOG_PREFIX = 'imopenssh'
 FNAME_LOG_EXTENSION = 'json'
 FNAME_SCP_SIZE = 1024 * 1024 # 500mb 1024 * 1024 * 500
@@ -19,7 +19,8 @@ ID_FILE = './id_rsa_im'
 COMPRESSION_NO = 'Compression no'
 
 # Ciphers to test
-std_ciphers = ['aes128-ctr',
+std_ciphers = [
+	'aes128-ctr',
 	'hmac-md5',
 	'aes128-ctr',
 	'hmac-md5-etm@openssh.com',
@@ -37,21 +38,38 @@ std_ciphers = ['aes128-ctr',
 	'hmac-ripemd160'
 	]
 
-auth_ciphers = ['chacha20-poly1305@openssh.com',
+auth_ciphers = [
+	'chacha20-poly1305@openssh.com',
 	'aes128-gcm@openssh.com'
 	]
 
 intermac_ciphers = [
+	'im-aes128-gcm-127',
+	'im-chacha-poly-127',
+	'im-aes128-gcm-128',
+	'im-chacha-poly-128',
+	'im-aes128-gcm-255',
+	'im-chacha-poly-255',	
 	'im-aes128-gcm-256',
 	'im-chacha-poly-256',
+	'im-aes128-gcm-511',
+	'im-chacha-poly-511',
 	'im-aes128-gcm-512',
 	'im-chacha-poly-512',
+	'im-aes128-gcm-1023',
+	'im-chacha-poly-1023',
 	'im-aes128-gcm-1024',
 	'im-chacha-poly-1024',
+	'im-aes128-gcm-2047',
+	'im-chacha-poly-2047',
 	'im-aes128-gcm-2048',
 	'im-chacha-poly-2048',
+	'im-aes128-gcm-4095',
+	'im-chacha-poly-4095',
 	'im-aes128-gcm-4096',
-	'im-chacha-poly-4096'
+	'im-chacha-poly-4096',
+	'im-aes128-gcm-8191',
+	'im-chacha-poly-8191',
 	'im-aes128-gcm-8192',
 	'im-chacha-poly-8192'
 	]
@@ -159,6 +177,8 @@ def run():
 					print '{} samples collected'.format(sample_progress * i)
 				i = i + 1
 
+				delete_remote_test_file()
+
 			rename_log_file(cipher, mac)
 
 		for cipher_list in auth_ciphers, intermac_ciphers:
@@ -177,6 +197,8 @@ def run():
 						print '{} samples collected'.format(sample_progress * i)
 					i = i + 1
 
+					delete_remote_test_file()
+
 				rename_log_file(cipher, None)
 
 		print '**********Finished benchmarks'
@@ -185,7 +207,6 @@ def run():
 
 	# Clean up
 	os.remove(FNAME_SCP)
-	delete_remote_test_file()
 
 if __name__ == '__main__':
 
