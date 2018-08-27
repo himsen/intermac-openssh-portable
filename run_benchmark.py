@@ -8,14 +8,13 @@ import datetime
 
 NUMBER_OF_SAMPLES = 3
 FNAME_LOG_PREFIX = 'imopenssh'
-FNAME_LOG_EXTENSION = 'json'
 FNAME_SCP_SIZE = 1024 * 1024 # 500mb 1024 * 1024 * 500
 FNAME_SCP = 'scp_copy'
 SSH_DIR = os.getcwd()
-USER = 'himsen'
-DEST = 'localhost'
-PORT = '22221'
-ID_FILE = './id_rsa_im'
+USER = ''
+DEST = ''
+PORT = ''
+ID_FILE = ''
 COMPRESSION_NO = 'Compression no'
 
 # Ciphers to test
@@ -111,7 +110,6 @@ def run_scp(cipher, mac, fd):
 	# 50ms should be enough
 	time.sleep(0.050)
 
-
 def init_log_file(cipher, mac):
 
 	with open(FNAME_LOG_PREFIX, "w+") as fd:
@@ -122,18 +120,14 @@ def init_log_file(cipher, mac):
 		fd.write('{}\n'.format(NUMBER_OF_SAMPLES))
 		fd.write('{}\n'.format(str(datetime.datetime.now().strftime("%x"))))
 
-
 def rename_log_file(cipher, mac):
 
 	if mac == None:
-		new_fname = '{}_{}.{}'.format(FNAME_LOG_PREFIX, cipher,
-			FNAME_LOG_EXTENSION)
+		new_fname = '{}_{}'.format(FNAME_LOG_PREFIX, cipher)
 	else:
-	 	new_fname = '{}_{}_{}.{}'.format(FNAME_LOG_PREFIX, cipher, mac,
-			FNAME_LOG_EXTENSION)	
+	 	new_fname = '{}_{}_{}'.format(FNAME_LOG_PREFIX, cipher, mac)	
 	print "Renaming file {} to {}".format(FNAME_LOG_PREFIX, new_fname)
 	os.rename(FNAME_LOG_PREFIX, new_fname)
-
 
 def delete_remote_test_file():
 
