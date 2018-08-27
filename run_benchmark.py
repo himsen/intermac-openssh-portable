@@ -6,20 +6,20 @@ import time
 import math
 import datetime
 
-NUMBER_OF_SAMPLES = 5
+NUMBER_OF_SAMPLES = 3
 FNAME_LOG_PREFIX = 'imopenssh'
-FNAME_LOG_EXTENSION = 'json'
-FNAME_SCP_SIZE = 1024 * 1024 * 500  # 500mb 1024 * 1024 * 500
+FNAME_SCP_SIZE = 1024 * 1024 * 500 # 500mb 1024 * 1024 * 500
 FNAME_SCP = 'scp_copy'
 SSH_DIR = os.getcwd()
-USER = 'ec2-user'
-DEST = '35.176.180.93'
-PORT = '22221'
-ID_FILE = '../rhul_im_ec2.pem'
+USER = ''
+DEST = ''
+PORT = ''
+ID_FILE = ''
 COMPRESSION_NO = 'Compression no'
 
 # Ciphers to test
-std_ciphers = ['aes128-ctr',
+std_ciphers = [
+	'aes128-ctr',
 	'hmac-md5',
 	'aes128-ctr',
 	'hmac-md5-etm@openssh.com',
@@ -37,21 +37,38 @@ std_ciphers = ['aes128-ctr',
 	'hmac-ripemd160'
 	]
 
-auth_ciphers = ['chacha20-poly1305@openssh.com',
+auth_ciphers = [
+	'chacha20-poly1305@openssh.com',
 	'aes128-gcm@openssh.com'
 	]
 
 intermac_ciphers = [
+	'im-aes128-gcm-127',
+	'im-chacha-poly-127',
+	'im-aes128-gcm-128',
+	'im-chacha-poly-128',
+	'im-aes128-gcm-255',
+	'im-chacha-poly-255',	
 	'im-aes128-gcm-256',
 	'im-chacha-poly-256',
+	'im-aes128-gcm-511',
+	'im-chacha-poly-511',
 	'im-aes128-gcm-512',
 	'im-chacha-poly-512',
+	'im-aes128-gcm-1023',
+	'im-chacha-poly-1023',
 	'im-aes128-gcm-1024',
 	'im-chacha-poly-1024',
+	'im-aes128-gcm-2047',
+	'im-chacha-poly-2047',
 	'im-aes128-gcm-2048',
 	'im-chacha-poly-2048',
+	'im-aes128-gcm-4095',
+	'im-chacha-poly-4095',
 	'im-aes128-gcm-4096',
 	'im-chacha-poly-4096',
+	'im-aes128-gcm-8191',
+	'im-chacha-poly-8191',
 	'im-aes128-gcm-8192',
 	'im-chacha-poly-8192'
 	]
@@ -93,7 +110,6 @@ def run_scp(cipher, mac, fd):
 	# 50ms should be enough
 	time.sleep(0.050)
 
-
 def init_log_file(cipher, mac):
 
 	with open(FNAME_LOG_PREFIX, "w+") as fd:
@@ -104,18 +120,14 @@ def init_log_file(cipher, mac):
 		fd.write('{}\n'.format(NUMBER_OF_SAMPLES))
 		fd.write('{}\n'.format(str(datetime.datetime.now().strftime("%x"))))
 
-
 def rename_log_file(cipher, mac):
 
 	if mac == None:
-		new_fname = '{}_{}.{}'.format(FNAME_LOG_PREFIX, cipher,
-			FNAME_LOG_EXTENSION)
+		new_fname = '{}_{}'.format(FNAME_LOG_PREFIX, cipher)
 	else:
-	 	new_fname = '{}_{}_{}.{}'.format(FNAME_LOG_PREFIX, cipher, mac,
-			FNAME_LOG_EXTENSION)	
+	 	new_fname = '{}_{}_{}'.format(FNAME_LOG_PREFIX, cipher, mac)	
 	print "Renaming file {} to {}".format(FNAME_LOG_PREFIX, new_fname)
 	os.rename(FNAME_LOG_PREFIX, new_fname)
-
 
 def delete_remote_test_file():
 
