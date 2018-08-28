@@ -8,7 +8,8 @@ import datetime
 
 NUMBER_OF_SAMPLES = 3
 FNAME_LOG_PREFIX = 'imopenssh'
-FNAME_SCP_SIZE = 1024 * 1024 # 500mb 1024 * 1024 * 500
+#FNAME_SCP_SIZE = 1024 * 1024 * 500 # 500mb
+FNAME_SCP_SIZE = 1024 * 1024 # 1mb
 FNAME_SCP = 'scp_copy'
 SSH_DIR = os.getcwd()
 USER = ''
@@ -169,9 +170,7 @@ def run():
 
 				if ((x + 1) % sample_progress == 0):
 					print '{} samples collected'.format(sample_progress * i)
-				i = i + 1
-
-				delete_remote_test_file()
+					i = i + 1
 
 			rename_log_file(cipher, mac)
 
@@ -189,9 +188,7 @@ def run():
 
 					if ((x + 1) % sample_progress == 0):
 						print '{} samples collected'.format(sample_progress * i)
-					i = i + 1
-
-					delete_remote_test_file()
+						i = i + 1
 
 				rename_log_file(cipher, None)
 
@@ -200,6 +197,7 @@ def run():
 		fd.close()
 
 	# Clean up
+	delete_remote_test_file()
 	os.remove(FNAME_SCP)
 
 if __name__ == '__main__':
