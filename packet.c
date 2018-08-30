@@ -1200,12 +1200,14 @@ int is_channel_data(u_char type) {
 void record_bytes(struct session_state *state, u_char type, size_t bytes, int raw, int mode) {
 
 	if (type == SSH2_MSG_CHANNEL_REQUEST) {
+
 		state->channel_data_started = 0; /* Indicates start of capture */
 		state->bytes_sent_channel_raw = 0;
 		state->bytes_sent_channel_ciphertext = 0;
 		state->eof_seen = 0; /* Indicates end of capture */
 	}
 	if (type == SSH2_MSG_CHANNEL_DATA) {
+
 		state->channel_data_started = 1;
 		if (raw == 1) {
 			if (mode == 0)
@@ -1220,22 +1222,15 @@ void record_bytes(struct session_state *state, u_char type, size_t bytes, int ra
 				state->bytes_receive_channel_ciphertext += bytes; /* Encrypted (ssh/intermac encoded) data from application */	
 		}
 	}
-	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
+	if ((type == SSH2_MSG_CHANNEL_EOF) && (state->channel_data_started == 1) && (state->eof_seen == 0)) {
+
 		if (mode == 0) {
 			state->r_bytes_sent_channel_raw = state->bytes_sent_channel_raw;
 			state->r_bytes_sent_channel_ciphertext = state->bytes_sent_channel_ciphertext;
-			/*
-			fprintf(stderr, "Bytes raw sent: %zu\n", state->bytes_sent_channel_raw);
-			fprintf(stderr, "Bytes encrypted sent: %zu\n", state->bytes_sent_channel_ciphertext);			
-			*/
 		}
 		else {
 			state->r_bytes_receive_channel_raw = state->bytes_receive_channel_raw;
 			state->r_bytes_receive_channel_ciphertext = state->bytes_receive_channel_ciphertext;
-			/*
-			fprintf(stderr, "Bytes raw received: %zu\n", state->bytes_receive_channel_raw);
-			fprintf(stderr, "Bytes encrypted received: %zu\n", state->bytes_recieve_channel_ciphertext);
-			*/
 		}
 		state->eof_seen = 1;
 	}
@@ -1441,12 +1436,17 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		state->p_send.blocks += len / block_size;
 		state->p_send.bytes += len + authlen + maclen;		
 	}
-	sshbuf_reset(state->outgoing_packet);
 
 	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
 	if (!state->server_side) {
-		record_bytes(state, type, sshbuf_len(state->output), 0, 0);
+
+		if (im_is_intermac)
+			record_bytes(state, type, im_length, 0, 0);
+		else
+			record_bytes(state, type, sshbuf_len(state->outgoing_packet) + authlen, 0, 0);
 	}
+
+	sshbuf_reset(state->outgoing_packet);
 
 	if (type == SSH2_MSG_NEWKEYS)
 		r = ssh_set_newkeys(ssh, MODE_OUT);
