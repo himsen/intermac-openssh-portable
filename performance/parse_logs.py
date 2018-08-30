@@ -5,22 +5,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statistics
 
-# Header size in a log file
-HEADER_SIZE = 3
+# Size of file copied as part of benchmark {1,50}.mb
+FILE_SIZE = 50
 
 # Relative path to log directory
 # 1mb
-LOG_DIR = './log_1'
+#LOG_DIR = './logs_1'
 # 50mb
-#LOG_DIR = './log_50'
+LOG_DIR = './logs_50'
 
 LOG_PREFIX = 'imopenssh_'
 LOG_PREFIX_LEN = 10
 
-NUMBER_OF_FUNCTIONS = 3
-functions = ['initialise', 'encrypt', 'decrypt']
-NUMBER_OF_CIPHERS = 2
-ciphers = ['aes128-gcm', 'chacha-poly']
+# Header size in a log file
+HEADER_SIZE = 3
+
 NUMBER_OF_CHUNK_LENGTHS = 14
 chunk_lengths = [
 	127,
@@ -38,7 +37,7 @@ chunk_lengths = [
 	8191,
 	8192]
 
-# Ciphers to test
+# Ciphers tested
 number_of_std_ciphers = 16
 std_ciphers = [
 	'aes128-ctr+hmac-md5',
@@ -97,11 +96,17 @@ bytes_sent_ct_im = []
 bytes_sent_raw_im = []
 time_std_auth = []
 bytes_sent_ct_std_auth = []
-bytes_sent_raw_std_autn = []
+bytes_sent_raw_std_auth = []
 
 def compute_time_median(median_list, data):
 
-	data_mb_s = [ (100 / x) for x in map(float, x) ]
+	data_mb_s = []
+
+	print data
+	for x in map(float, data):
+		if x != 0:
+			data_mb_s.append( FILE_SIZE / x )
+
 	median_list.append(np.median(map(float, data_mb_s)))
 
 def compute_bytes_average(avg_list, data):
@@ -153,15 +158,14 @@ def parse_logs():
 				time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
 
 				# Branch depending on type of cipher
-				if (cipher_name in std_ciphers) or
-					(cipher_name in auth_ciphers):
+				if (cipher in std_ciphers) or (cipher in auth_ciphers):
 
 					labels_std_auth.append(cipher)
 					compute_time_median(time_std_auth, time_list)
 					compute_bytes_average(bytes_sent_ct_std_auth, ct_list)
 					compute_bytes_average(bytes_sent_raw_std_auth, raw_list)
 
-				if (cipher_name in intermac_ciphers):
+				if (cipher in intermac_ciphers):
 
 					labels_im.append(cipher)
 					compute_time_median(time_im, time_list)
@@ -173,7 +177,7 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit):
 	# Max x-label 1mb
 	#max_x_label = 10000
 	# Max x-label 50mb
-	max_x_label = 10000
+	max_x_label = 600
 
 	y = np.arange(len(labels) * 2, step=2)
 	height = 1.2
@@ -189,15 +193,15 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit):
 	
 	ax.grid(color='green', linestyle='-')
 
-	#for r in rec:
-	#	w = r.get_width()
-	#	if not w == 0:	
-	#		ax.text(10, r.get_y() + 0.5, '{}'.format(w), color='blue', fontweight='bold')
+	for r in rec:
+		w = r.get_width()
+		if not w == 0:
+			ax.text(10, r.get_y() + 0.5, '{}'.format(w), color='blue', fontweight='bold')
 
 def do_graphs():
 
-	chart_tile_im = 'Median time InterMAC ciphers'
-	chart_title_std_auth = 'Median time STD and AUTH cipher'
+	chart_title_im = 'Median time InterMAC ciphers'
+	chart_title_std_auth = 'Median time STD and AUTH ciphers'
 
 	#fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(10,10))
 	fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,10))
@@ -206,8 +210,8 @@ def do_graphs():
 	ax1, ax2 = axes.flatten()
 
 	# Time
-	draw_graph(ax1, labels_im, time_im, chart_title_im, 'MB/s', 28)
-	draw_graph(ax2, labels_std_auth, time_std_auth, chart_title_std_auth, 'MB/s', 10)
+	draw_graph(ax1, labels_im, time_im, chart_title_im, 'MB/s', 56)
+	draw_graph(ax2, labels_std_auth, time_std_auth, chart_title_std_auth, 'MB/s', 20)
 
 	# Bytes sent ciphertext
 	#draw_graph(ax1, labels_im, bytes_sent_ct_im, chart_title_im, 'MB', 28)
@@ -230,6 +234,6 @@ if __name__ == '__main__':
 	print 'Labels STD/AUTH ciphers:\n{}'.format(labels_std_auth)
 	print 'Medians STD_AUTH ciphers:\n{}'.format(time_std_auth)
 	print 'Bytes sent CT STD/AUTH ciphers:\n{}'.format(bytes_sent_ct_std_auth)
-	print 'Bytes sent raw STD/AUTH ciphers:\n{}'.format(bytes_sent_std_auth)
+	print 'Bytes sent raw STD/AUTH ciphers:\n{}'.format(bytes_sent_raw_std_auth)
 
 	do_graphs()
