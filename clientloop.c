@@ -1831,6 +1831,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 	*/
 
 	/* +1 to copy \0 terminater */
+	/*
 	char prefix_len = 10;
 	char prefix[10] = "imopenssh";
 	char *fname = NULL;
@@ -1846,21 +1847,20 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 		if (fd != NULL) {
 
-			/* CAPTURE patched to not print received data */
+			*//* CAPTURE patched to not print received data *//*
 			fprintf(fd, "%.1f\n%" PRIu64 "\n%" PRIu64 "\n", total_time, bytes_sent_channel_ciphertext, bytes_sent_channel_raw);
 			fclose(fd);
 		}
 
 		free(fname);
 	}
+	*/
 
-/*		
-		verbose("Time sent: %.1f", total_time);
-		verbose("Time received: %.1f", total_time);
-		verbose("Bytes non channel sent: %" PRIu64, sent_non_channel_data);
-		verbose("Bytes non channel received: %" PRIu64, receive_non_channel_data);
-	}
-*/
+	fprintf(stderr, "Wall time: %.1f\n", total_time);
+	//verbose("Time received: %.1f", total_time);
+	fprintf(stderr, "Bytes encrypted sent: %" PRIu64 "\n", bytes_sent_channel_ciphertext);
+	fprintf(stderr, "Bytes raw sent: %" PRIu64 "\n", bytes_sent_channel_raw);
+
 	/* Return the exit status of the program. */
 	debug("Exit status %d", exit_status);
 	return exit_status;
