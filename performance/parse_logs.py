@@ -5,14 +5,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import statistics
 
-# Size of file copied as part of benchmark {1,50}.mb
-FILE_SIZE = 50
+# Size of file copied as part of benchmark {1,50,500}.mb
+FILE_SIZE = 100
 
 # Relative path to log directory
 # 1mb
 #LOG_DIR = './logs_1'
+# 10mb
+#LOG_DIR = './logs_10_3_region'
 # 50mb
-LOG_DIR = './logs_50'
+#LOG_DIR = './logs_50'
+# 100mb
+#LOG_DIR = './logs_100_5'
+# 100mb (local)
+#LOG_DIR = './logs_100_5_local'
+# 100mb
+LOG_DIR = './logs_100_10_region'
+# 500mb
+#LOG_DIR = './logs_500_test'
+# 500 mb
+LOG_DIR = './logs_500_5_local'
 
 LOG_PREFIX = 'imopenssh_'
 LOG_PREFIX_LEN = 10
@@ -39,6 +51,7 @@ chunk_lengths = [
 
 # Ciphers tested
 number_of_std_ciphers = 16
+
 std_ciphers = [
 	'aes128-ctr+hmac-md5',
 	'aes128-ctr+hmac-md5-etm@openssh.com',
@@ -102,12 +115,11 @@ def compute_time_median(median_list, data):
 
 	data_mb_s = []
 
-	print data
 	for x in map(float, data):
 		if x != 0:
 			data_mb_s.append( FILE_SIZE / x )
 
-	median_list.append(np.median(map(float, data_mb_s)))
+	median_list.append(np.median(data_mb_s))
 
 def compute_bytes_average(avg_list, data):
 
@@ -153,6 +165,8 @@ def parse_logs():
 				cipher = log[0]
 				stat_size = int(log[1])
 				date = log[2]
+
+				print 'Cipher: {}'.format(cipher)
 
 				# Parse sample data
 				time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
