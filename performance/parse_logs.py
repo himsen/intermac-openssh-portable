@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import statistics
 
 # Size of file copied as part of benchmark {1,50,500}.mb
-FILE_SIZE = 100
+FILE_SIZE = 50
 
 # Relative path to log directory
 # 1mb
@@ -15,16 +15,20 @@ FILE_SIZE = 100
 #LOG_DIR = './logs_10_3_region'
 # 50mb
 #LOG_DIR = './logs_50'
+# 100mb (region)
+#LOG_DIR = './logs_100_10_region'
+# 100mb (region)
+LOG_DIR = './logs_100_25_region'
 # 100mb
 #LOG_DIR = './logs_100_5'
 # 100mb (local)
 #LOG_DIR = './logs_100_5_local'
 # 100mb
-LOG_DIR = './logs_100_10_region'
+#LOG_DIR = './logs_100_10_region'
 # 500mb
 #LOG_DIR = './logs_500_test'
 # 500 mb
-LOG_DIR = './logs_500_5_local'
+#LOG_DIR = './logs_500_5_local'
 
 LOG_PREFIX = 'imopenssh_'
 LOG_PREFIX_LEN = 10
@@ -34,7 +38,7 @@ HEADER_SIZE = 3
 
 NUMBER_OF_CHUNK_LENGTHS = 14
 chunk_lengths = [
-	127,
+	127, 
 	128,
 	255,
 	256,
@@ -63,10 +67,37 @@ std_ciphers = [
 	'aes128-ctr+hmac-ripemd160'
 	]
 
+std_ciphers_grab = [
+	'aes128-ctr_hmac-md5',
+	'aes128-ctr_hmac-md5-etm@openssh.com',
+	'aes128-ctr_umac-64-etm@openssh.com',
+	'aes128-ctr_hmac-sha1',
+	'3des-cbc_hmac-md5',
+	'aes256-ctr_hmac-sha2-512',
+	'aes128-cbc_hmac-sha1',
+	'aes128-ctr_hmac-ripemd160'
+	]
+
+std_ciphers_labels = [
+	'aes128-ctr+hmac-md5',
+	'aes128-ctr+hmac-md5-etm@',
+	'aes128-ctr+umac-64-etm@',
+	'aes128-ctr+hmac-sha1',
+	'3des-cbc+hmac-md5',
+	'aes256-ctr+hmac-sha2-512',
+	'aes128-cbc+hmac-sha1',
+	'aes128-ctr+hmac-ripemd160'
+	]
+
 number_of_auth_ciphers = 2
 auth_ciphers = [
 	'chacha20-poly1305@openssh.com',
 	'aes128-gcm@openssh.com'
+	]
+
+auth_ciphers_labels = [
+	'chacha20-poly1305@',
+	'aes128-gcm@'
 	]
 
 number_of_intermac_ciphers = 28
@@ -149,49 +180,98 @@ def parse_logs():
 	time_list = []
 	ct_list = []
 	raw_list = []
+	label_index = 0
 
-	# Cycle through all files in directory
-	for file in os.listdir(LOG_DIR):
-		# Grab log files
-		if file.startswith(LOG_PREFIX):
+	for c in intermac_ciphers:
 
-			with open(os.path.join(LOG_DIR, file), 'r') as fd:
+		with open(os.path.join(LOG_DIR, '{}{}'.format(LOG_PREFIX, c)), 'r') as fd:
 
-				# Split by newline
-				log = fd.read().split('\n')
+			# Split by newline
+			log = fd.read().split('\n')
 
-				# Get header info
-				# (cipher, sample size, date of benchmark)
-				cipher = log[0]
-				stat_size = int(log[1])
-				date = log[2]
+			# Get header info
+			# (cipher, sample size, date of benchmark)
+			cipher = log[0]
+			stat_size = int(log[1])
+			date = log[2]
 
-				print 'Cipher: {}'.format(cipher)
+			print 'Cipher: {}'.format(cipher)
 
-				# Parse sample data
-				time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
+			# Parse sample data
+			time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
 
-				# Branch depending on type of cipher
-				if (cipher in std_ciphers) or (cipher in auth_ciphers):
+			if (cipher in intermac_ciphers):
 
-					labels_std_auth.append(cipher)
-					compute_time_median(time_std_auth, time_list)
-					compute_bytes_average(bytes_sent_ct_std_auth, ct_list)
-					compute_bytes_average(bytes_sent_raw_std_auth, raw_list)
+				labels_im.append(cipher)
+				compute_time_median(time_im, time_list)
+				compute_bytes_average(bytes_sent_ct_im, ct_list)
+				compute_bytes_average(bytes_sent_raw_im, raw_list)
 
-				if (cipher in intermac_ciphers):
+	label_index = 0
 
-					labels_im.append(cipher)
-					compute_time_median(time_im, time_list)
-					compute_bytes_average(bytes_sent_ct_im, ct_list)
-					compute_bytes_average(bytes_sent_raw_im, raw_list)
+	for c in std_ciphers_grab:
+
+		with open(os.path.join(LOG_DIR, '{}{}'.format(LOG_PREFIX, c)), 'r') as fd:
+
+			# Split by newline
+			log = fd.read().split('\n')
+
+			# Get header info
+			# (cipher, sample size, date of benchmark)
+			cipher = log[0]
+			stat_size = int(log[1])
+			date = log[2]
+
+			print 'Cipher: {}'.format(cipher)
+
+			# Parse sample data
+			time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
+
+			# Branch depending on type of cipher
+			if cipher in std_ciphers:
+
+				labels_std_auth.append(std_ciphers_labels[label_index])
+				compute_time_median(time_std_auth, time_list)
+				compute_bytes_average(bytes_sent_ct_std_auth, ct_list)
+				compute_bytes_average(bytes_sent_raw_std_auth, raw_list)
+				label_index = label_index + 1
+
+	label_index = 0
+
+	for c in auth_ciphers:
+
+		with open(os.path.join(LOG_DIR, '{}{}'.format(LOG_PREFIX, c)), 'r') as fd:
+
+			# Split by newline
+			log = fd.read().split('\n')
+
+			# Get header info
+			# (cipher, sample size, date of benchmark)
+			cipher = log[0]
+			stat_size = int(log[1])
+			date = log[2]
+
+			print 'Cipher: {}'.format(cipher)
+
+			# Parse sample data
+			time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
+
+			# Branch depending on type of cipher
+			if cipher in auth_ciphers:
+
+				labels_std_auth.append(auth_ciphers_labels[label_index])
+				compute_time_median(time_std_auth, time_list)
+				compute_bytes_average(bytes_sent_ct_std_auth, ct_list)
+				compute_bytes_average(bytes_sent_raw_std_auth, raw_list)
+				label_index = label_index + 1
 
 def draw_graph(ax, labels, data, title, xlabel, ylimit):
 
 	# Max x-label 1mb
 	#max_x_label = 10000
 	# Max x-label 50mb
-	max_x_label = 600
+	#max_x_label = 300
+	max_x_label = 260
 
 	y = np.arange(len(labels) * 2, step=2)
 	height = 1.2
@@ -214,8 +294,8 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit):
 
 def do_graphs():
 
-	chart_title_im = 'Median time InterMAC ciphers'
-	chart_title_std_auth = 'Median time STD and AUTH ciphers'
+	chart_title_im = ''
+	chart_title_std_auth = ''
 
 	#fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(10,10))
 	fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,10))
@@ -228,13 +308,14 @@ def do_graphs():
 	draw_graph(ax2, labels_std_auth, time_std_auth, chart_title_std_auth, 'MB/s', 20)
 
 	# Bytes sent ciphertext
-	#draw_graph(ax1, labels_im, bytes_sent_ct_im, chart_title_im, 'MB', 28)
-	#draw_graph(ax2, labels_std_auth, bytes_sent_sct_td_auth, chart_title_std_auth, 'MB', 10)
+	#draw_graph(ax1, labels_im, bytes_sent_ct_im, chart_title_im, 'MB', 56)
+	#draw_graph(ax2, labels_std_auth, bytes_sent_ct_std_auth, chart_title_std_auth, 'MB', 20)
 
 	# Bytes sent raw
-	#draw_graph(ax1, labels_im, bytes_sent_raw_im, chart_title_im, 'MB', 28)
-	#draw_graph(ax2, labels_std_auth, bytes_sent_raw_std_auth, chart_title_std_auth, 'MB', 10)
+	#draw_graph(ax1, labels_im, bytes_sent_raw_im, chart_title_im, 'MB', 56)
+	#draw_graph(ax2, labels_std_auth, bytes_sent_raw_std_auth, chart_title_std_auth, 'MB', 1200)
 
+	plt.tight_layout()
 	plt.show()
 
 if __name__ == '__main__':
