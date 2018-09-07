@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python2.7
 
 import os
 import numpy as np
@@ -183,9 +183,9 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit, x_label_if):
 	#max_x_label = 135
 
 	if (x_label_if == 1):
-		max_x_label = 8.5
+		max_x_label = 9.5
 	elif (x_label_if == 2):
-		max_x_label = 135
+		max_x_label = 145
 
 	y = np.arange(len(labels) * 2, step=2)
 	height = 1.2
@@ -208,7 +208,8 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit, x_label_if):
 
 def do_graphs():
 
-	chart_title = ''
+	chart_title_throughput = 'Throughput (100mb)'
+	chart_title_ct = 'Total ciphertext length'
 
 	#fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(10,10))
 	fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10,10))
@@ -217,10 +218,10 @@ def do_graphs():
 	ax1, ax2 = axes.flatten()
 
 	# Time
-	draw_graph(ax1, labels, time, chart_title, 'MB/s', 56)
+	draw_graph(ax1, labels, time, chart_title_throughput, 'MB/s', 56)
 
 	# Bytes sent ciphertext
-	draw_graph(ax1, labels, bytes_sent_ct, chart_title, 'MB', 56)
+	draw_graph(ax1, labels, bytes_sent_ct, chart_title_ct, 'MB', 56)
 
 	# Bytes sent raw
 	#draw_graph(ax1, labels, bytes_sent_raw, chart_title, 'MB', 56)
@@ -230,24 +231,25 @@ def do_graphs():
 
 def do_graphs_grid():
 
-	chart_title = ''
+	chart_title_throughput = 'Throughput (100mb)'
+	chart_title_ct = 'Total ciphertext length'
 
-	fig = plt.figure(figsize=(10,10))
+	fig = plt.figure(figsize=(9,4.5))
 
 	gs = gridspec.GridSpec(1, 2, width_ratios=[1, 2])
 	ax1 = plt.subplot(gs[0])
 	ax2 = plt.subplot(gs[1])
 
 	# Time
-	draw_graph(ax1, labels, time, chart_title, 'MB/s', 32, 1)
+	draw_graph(ax1, labels, time, chart_title_throughput, 'MB/s', 32, 1)
 
 	# Bytes sent ciphertext
-	draw_graph(ax2, labels, bytes_sent_ct, chart_title, 'MB', 32, 2)
+	draw_graph(ax2, labels, bytes_sent_ct, chart_title_ct, 'MB', 32, 2)
 
 	# Bytes sent raw
 	#draw_graph(ax1, labels, bytes_sent_raw, chart_title, 'MB', 56)
 
-	plt.tight_layout()
+	plt.tight_layout(pad=1, w_pad=1, h_pad=1.5)
 	plt.show()
 
 if __name__ == '__main__':

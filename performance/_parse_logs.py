@@ -1,9 +1,8 @@
-#!/usr/bin/python2
+#!/usr/bin/python2.7
 
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import statistics
 
 # Size of file copied as part of benchmark {1,50,500}.mb
 FILE_SIZE = 100
@@ -16,9 +15,9 @@ FILE_SIZE = 100
 # 50mb
 #LOG_DIR = './logs_50'
 # 50mb for CT size
-#LOG_DIR = './logs_50_ct'
+LOG_DIR = './logs_50_ct'
 # 100 mb (region)
-LOG_DIR = './logs_100_25_region'
+#LOG_DIR = './logs_100_25_region'
 # 100mb
 #LOG_DIR = './logs_100_5'
 # 100mb (local)
@@ -302,12 +301,12 @@ def do_graphs():
 	#draw_graph(ax2, labels_std_auth, time_std_auth, chart_title_std_auth, 'MB/s', 20)
 
 	# Bytes sent ciphertext
-	#draw_graph(ax1, labels_im, bytes_sent_ct_im, chart_title_im, 'MB', 56)
-	#draw_graph(ax2, labels_std_auth, bytes_sent_ct_std_auth, chart_title_std_auth, 'MB', 20)
+	draw_graph(ax1, labels_im, bytes_sent_ct_im, chart_title_im, 'MB', 56)
+	draw_graph(ax2, labels_std_auth, bytes_sent_ct_std_auth, chart_title_std_auth, 'MB', 20)
 
 	# Bytes sent raw
-	draw_graph(ax1, labels_im, bytes_sent_raw_im, chart_title_im, 'MB', 56)
-	draw_graph(ax2, labels_std_auth, bytes_sent_raw_std_auth, chart_title_std_auth, 'MB', 20)
+	#draw_graph(ax1, labels_im, bytes_sent_raw_im, chart_title_im, 'MB', 56)
+	#draw_graph(ax2, labels_std_auth, bytes_sent_raw_std_auth, chart_title_std_auth, 'MB', 20)
 
 	plt.tight_layout()
 	plt.show()

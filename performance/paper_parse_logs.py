@@ -3,6 +3,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 # Size of file copied as part of benchmark {1,50,500}.mb
 FILE_SIZE = 50
@@ -101,45 +102,87 @@ auth_ciphers_labels = [
 
 number_of_intermac_ciphers = 28
 intermac_ciphers = [
-	'im-aes128-gcm-127',
-	'im-chacha-poly-127',
 	'im-aes128-gcm-128',
-	'im-chacha-poly-128',
-	'im-aes128-gcm-255',
-	'im-chacha-poly-255',	
-	'im-aes128-gcm-256',
-	'im-chacha-poly-256',
-	'im-aes128-gcm-511',
-	'im-chacha-poly-511',
+	'im-chacha-poly-128',	
 	'im-aes128-gcm-512',
 	'im-chacha-poly-512',
-	'im-aes128-gcm-1023',
-	'im-chacha-poly-1023',
 	'im-aes128-gcm-1024',
 	'im-chacha-poly-1024',
-	'im-aes128-gcm-2047',
-	'im-chacha-poly-2047',
 	'im-aes128-gcm-2048',
 	'im-chacha-poly-2048',
-	'im-aes128-gcm-4095',
-	'im-chacha-poly-4095',
-	'im-aes128-gcm-4096',
-	'im-chacha-poly-4096',
-	'im-aes128-gcm-8191',
-	'im-chacha-poly-8191',
 	'im-aes128-gcm-8192',
 	'im-chacha-poly-8192'
 	]
 
-labels_im = []
-labels_std_auth = []
+number_of_ciphers = 13
+ciphers = [
+	'3des-cbc+hmac-md5',
+	'chacha20-poly1305@openssh.com',
+	'aes128-gcm@openssh.com',
+	'im-aes128-gcm-128',
+	'im-chacha-poly-128',	
+	'im-aes128-gcm-512',
+	'im-chacha-poly-512',
+	'im-aes128-gcm-1024',
+	'im-chacha-poly-1024',
+	'im-aes128-gcm-2048',
+	'im-chacha-poly-2048',
+	'im-aes128-gcm-8192',
+	'im-chacha-poly-8192'
+	]
 
-time_im = []
-bytes_sent_ct_im = []
-bytes_sent_raw_im = []
-time_std_auth = []
-bytes_sent_ct_std_auth = []
-bytes_sent_raw_std_auth = []
+ciphers_label = [
+	'3des-cbc+hmac-md5',
+	'chacha20-poly1305@',
+	'aes128-gcm@',
+	'im-aes128-gcm-128',
+	'im-chacha-poly-128',	
+	'im-aes128-gcm-512',
+	'im-chacha-poly-512',
+	'im-aes128-gcm-1024',
+	'im-chacha-poly-1024',
+	'im-aes128-gcm-2048',
+	'im-chacha-poly-2048',
+	'im-aes128-gcm-8192',
+	'im-chacha-poly-8192'
+	]
+
+ciphers_grab = [
+	'3des-cbc_hmac-md5',
+	'chacha20-poly1305@openssh.com',
+	'aes128-gcm@openssh.com',
+	'im-aes128-gcm-128',
+	'im-chacha-poly-128',	
+	'im-aes128-gcm-512',
+	'im-chacha-poly-512',
+	'im-aes128-gcm-1024',
+	'im-chacha-poly-1024',
+	'im-aes128-gcm-2048',
+	'im-chacha-poly-2048',
+	'im-aes128-gcm-8192',
+	'im-chacha-poly-8192'
+	]
+
+labels = []
+
+time = []
+bytes_sent_raw = []
+
+bytes_sent_ct = [
+	52.505076799999998,
+	52.488540799999996,
+	52.48668399999999,
+	59.635280999999999,
+	59.703140999999995,
+	55.020972600000007,
+	55.396985799999996,
+	54.972087000000002,
+	55.484675399999993,
+	56.660295999999995,
+	56.919246999999999,
+	72.262185200000005,
+	71.61859960000001
+]
 
 def compute_time_median(median_list, data):
 
@@ -181,34 +224,9 @@ def parse_logs():
 	raw_list = []
 	label_index = 0
 
-	for c in intermac_ciphers:
-
-		with open(os.path.join(LOG_DIR, '{}{}'.format(LOG_PREFIX, c)), 'r') as fd:
-
-			# Split by newline
-			log = fd.read().split('\n')
-
-			# Get header info
-			# (cipher, sample size, date of benchmark)
-			cipher = log[0]
-			stat_size = int(log[1])
-			date = log[2]
-
-			print 'Cipher: {}'.format(cipher)
-
-			# Parse sample data
-			time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
-
-			if (cipher in intermac_ciphers):
-
-				labels_im.append(cipher)
-				compute_time_median(time_im, time_list)
-				compute_bytes_average(bytes_sent_ct_im, ct_list)
-				compute_bytes_average(bytes_sent_raw_im, raw_list)
-
 	label_index = 0
 
-	for c in std_ciphers_grab:
+	for c in ciphers_grab:
 
 		with open(os.path.join(LOG_DIR, '{}{}'.format(LOG_PREFIX, c)), 'r') as fd:
 
@@ -227,50 +245,25 @@ def parse_logs():
 			time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
 
 			# Branch depending on type of cipher
-			if cipher in std_ciphers:
+			if cipher in ciphers:
 
-				labels_std_auth.append(std_ciphers_labels[label_index])
-				compute_time_median(time_std_auth, time_list)
-				compute_bytes_average(bytes_sent_ct_std_auth, ct_list)
-				compute_bytes_average(bytes_sent_raw_std_auth, raw_list)
+				labels.append(ciphers_label[label_index])
+				compute_time_median(time, time_list)
+				compute_bytes_average(bytes_sent_raw, raw_list)
 				label_index = label_index + 1
 
 	label_index = 0
 
-	for c in auth_ciphers:
-
-		with open(os.path.join(LOG_DIR, '{}{}'.format(LOG_PREFIX, c)), 'r') as fd:
-
-			# Split by newline
-			log = fd.read().split('\n')
-
-			# Get header info
-			# (cipher, sample size, date of benchmark)
-			cipher = log[0]
-			stat_size = int(log[1])
-			date = log[2]
-
-			print 'Cipher: {}'.format(cipher)
-
-			# Parse sample data
-			time_list, ct_list, raw_list = parse_data(log[HEADER_SIZE:])
-
-			# Branch depending on type of cipher
-			if cipher in auth_ciphers:
-
-				labels_std_auth.append(auth_ciphers_labels[label_index])
-				compute_time_median(time_std_auth, time_list)
-				compute_bytes_average(bytes_sent_ct_std_auth, ct_list)
-				compute_bytes_average(bytes_sent_raw_std_auth, raw_list)
-				label_index = label_index + 1
-
-def draw_graph(ax, labels, data, title, xlabel, ylimit):
+def draw_graph(ax, labels, data, title, xlabel, ylimit, x_label_if):
 
 	# Max x-label 1mb
 	#max_x_label = 10000
 	# Max x-label 50mb
 	#max_x_label = 300
-	max_x_label = 260
+	if (x_label_if == 1):
+		max_x_label = 265
+	elif (x_label_if == 2):
+		max_x_label = 85
 
 	y = np.arange(len(labels) * 2, step=2)
 	height = 1.2
@@ -286,10 +279,10 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit):
 	
 	ax.grid(color='green', linestyle='-')
 
-	for r in rec:
-		w = r.get_width()
-		if not w == 0:
-			ax.text(10, r.get_y() + 0.5, '{}'.format(w), color='blue', fontweight='bold')
+	#for r in rec:
+	#	w = r.get_width()
+	#	if not w == 0:
+	#		ax.text(10, r.get_y() + 0.5, '{}'.format(w), color='blue', fontweight='bold')
 
 def do_graphs():
 
@@ -317,17 +310,36 @@ def do_graphs():
 	plt.tight_layout()
 	plt.show()
 
+def do_graphs_grid():
+
+	chart_title_throughput = 'Throughput (50mb)'
+	chart_title_ct = 'Total ciphertext length'
+
+	fig = plt.figure(figsize=(9,3.7))
+
+	gs = gridspec.GridSpec(1, 2, width_ratios=[1.5, 1])
+	ax1 = plt.subplot(gs[0])
+	ax2 = plt.subplot(gs[1])
+
+	# Time
+	draw_graph(ax1, labels, time, chart_title_throughput, 'MB/s', 26, 1)
+
+	# Bytes sent ciphertext
+	draw_graph(ax2, labels, bytes_sent_ct, chart_title_ct, 'MB', 26, 2)
+
+	# Bytes sent raw
+	#draw_graph(ax1, labels, bytes_sent_raw, chart_title, 'MB', 56)
+
+	plt.tight_layout(pad=1, w_pad=1, h_pad=1.5)
+	plt.show()
+
 if __name__ == '__main__':
 
 	parse_logs()
 
-	print 'Labels IM ciphers:\n{}'.format(labels_im)
-	print 'Medians IM ciphers:\n{}'.format(time_im)
-	print 'Bytes sent CT IM ciphers:\n{}'.format(bytes_sent_ct_im)
-	print 'Bytes sent raw IM ciphers:\n{}'.format(bytes_sent_raw_im)
-	print 'Labels STD/AUTH ciphers:\n{}'.format(labels_std_auth)
-	print 'Medians STD_AUTH ciphers:\n{}'.format(time_std_auth)
-	print 'Bytes sent CT STD/AUTH ciphers:\n{}'.format(bytes_sent_ct_std_auth)
-	print 'Bytes sent raw STD/AUTH ciphers:\n{}'.format(bytes_sent_raw_std_auth)
+	print 'Labels ciphers:\n{}'.format(ciphers_label)
+	print 'Medians ciphers:\n{}'.format(time)
+	print 'Bytes sent CT ciphers:\n{}'.format(bytes_sent_ct)
+	print 'Bytes sent raw ciphers:\n{}'.format(bytes_sent_raw)
 
-	do_graphs()
+	do_graphs_grid()
