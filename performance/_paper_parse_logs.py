@@ -57,6 +57,7 @@ chunk_lengths = [
 # Ciphers
 number_of_ciphers = 16
 ciphers = [
+	'3des-cbc+hmac-md5',
 	'chacha20-poly1305@openssh.com',
 	'aes128-gcm@openssh.com',
 	'im-aes128-gcm-128',
@@ -76,6 +77,7 @@ ciphers = [
 	]
 
 ciphers_label = [
+	'3des-cbc+hmac-md5',
 	'chacha20-poly1305@',
 	'aes128-gcm@',
 	'im-aes128-gcm-128',
@@ -199,7 +201,7 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit, x_label_if):
 	ax.set_xlim(0, max_x_label)
 	ax.set_ylim(-1.5, ylimit - 0.5)
 	
-	ax.grid(color='green', linestyle='-')
+	ax.xaxis.grid(color='green', linestyle='-')
 
 	#for r in rec:
 	#	w = r.get_width()
@@ -231,25 +233,27 @@ def do_graphs():
 
 def do_graphs_grid():
 
-	chart_title_throughput = 'Throughput (100mb)'
-	chart_title_ct = 'Total ciphertext length'
+	chart_title_throughput = 'Throughput'
+	chart_title_ct = 'Total ciphertext volume'
 
 	fig = plt.figure(figsize=(9,4.5))
+
+	fig.suptitle('{}'.format('100mb SCP file transfer'), fontsize=15, x=0.525)
 
 	gs = gridspec.GridSpec(1, 2, width_ratios=[1, 2])
 	ax1 = plt.subplot(gs[0])
 	ax2 = plt.subplot(gs[1])
 
 	# Time
-	draw_graph(ax1, labels, time, chart_title_throughput, 'MB/s', 32, 1)
+	draw_graph(ax1, labels, time, chart_title_throughput, 'MB/s', 34, 1)
 
 	# Bytes sent ciphertext
-	draw_graph(ax2, labels, bytes_sent_ct, chart_title_ct, 'MB', 32, 2)
+	draw_graph(ax2, labels, bytes_sent_ct, chart_title_ct, 'MB', 34, 2)
 
 	# Bytes sent raw
 	#draw_graph(ax1, labels, bytes_sent_raw, chart_title, 'MB', 56)
-
-	plt.tight_layout(pad=1, w_pad=1, h_pad=1.5)
+	plt.tight_layout(pad=1, w_pad=1, h_pad=1.5, rect=[0, 0, 1, 0.97])
+	#plt.tight_layout(pad=1, w_pad=1, h_pad=1.5)
 	plt.show()
 
 if __name__ == '__main__':
