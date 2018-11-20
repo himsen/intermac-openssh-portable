@@ -268,7 +268,7 @@ def draw_graph(ax, labels, data, title, xlabel, ylimit, x_label_if):
 	y = np.arange(len(labels) * 2, step=2)
 	height = 1.2
 
-	rec = ax.barh(y, data, height, align='center', color='red')
+	rec = ax.barh(y, data, height, align='center', color='#DA2256')
 	ax.set_title(title)
 	ax.set_yticks(y)
 	ax.set_yticklabels(labels)
@@ -317,7 +317,7 @@ def do_graphs_grid():
 
 	fig = plt.figure(figsize=(9,3.7))
 
-	fig.suptitle('{}'.format('50mb SCP file transfer'), fontsize=15, x=0.59)
+	fig.suptitle('{}'.format('50MB SCP file transfer'), fontsize=15, x=0.59)
 
 	gs = gridspec.GridSpec(1, 2, width_ratios=[1.3, 1])
 	ax1 = plt.subplot(gs[0])
